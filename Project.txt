@@ -91,3 +91,5 @@ Rate Limit 80% 도달 시 자동 알림 및 트래픽 조절.
 [27] 장애 대응 시스템
 Circuit Breaker 패턴으로 연쇄 장애 방지.
 자동 장애 복구 및 Graceful Degradation 메커니즘.
+
+TEST
