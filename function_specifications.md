@@ -282,7 +282,94 @@
 
 ---
 
-## 6. processOrder 함수
+## 6. getSetChangeOptions 함수
+
+### 목적
+세트 메뉴의 현재 구성품과 변경 가능한 음료/사이드 옵션을 조회하는 함수
+
+### 입력 (Input)
+```json
+{
+  "function_name": "getSetChangeOptions",
+  "parameters": {
+    "set_product_id": "string"           // 세트 상품 ID (예: "G00001")
+  }
+}
+```
+
+### 출력 (Output)
+```json
+{
+  "success": true,
+  "set_product_id": "G00001",
+  "current_components": {
+    "burger": {
+      "product_id": "A00001",
+      "product_name": "한우불고기버거",
+      "product_type": "burger",
+      "price": 9000,
+      "quantity": 1,
+      "is_default": true
+    },
+    "sides": {
+      "product_id": "B00001",
+      "product_name": "포테이토 (미디움)",
+      "product_type": "sides",
+      "price": 2000,
+      "quantity": 1,
+      "is_default": true
+    },
+    "beverage": {
+      "product_id": "C00001",
+      "product_name": "콜라 (미디움)",
+      "product_type": "beverage",
+      "price": 2000,
+      "quantity": 1,
+      "is_default": true
+    }
+  },
+  "change_options": {
+    "sides": [
+      {
+        "product_id": "B00001",
+        "product_name": "포테이토 (미디움)",
+        "price": 2000,
+        "description": "바로 튀겨낸 바삭바삭한 후렌치 포테이토"
+      },
+      {
+        "product_id": "B00003",
+        "product_name": "양념감자 (어니언)",
+        "price": 2600,
+        "description": "어니언 시즈닝을 뿌려먹는 포테이토"
+      }
+    ],
+    "beverage": [
+      {
+        "product_id": "C00001",
+        "product_name": "콜라 (미디움)",
+        "price": 2000,
+        "description": "톡 쏘는 시원 상쾌한 펩시콜라"
+      },
+      {
+        "product_id": "C00007",
+        "product_name": "아이스티 (미디움)",
+        "price": 2300,
+        "description": "달콤한 복숭아 맛의 시원한 아이스 드링크"
+      }
+    ]
+  },
+  "message": "세트 구성품과 변경 가능한 옵션을 조회했습니다."
+}
+```
+
+### 사용 예시
+- 사용자: "한우불고기버거 세트 주문하고 싶은데 음료 바꿀 수 있나요?"
+- LLM이 getSetChangeOptions 호출하여 변경 가능한 음료 옵션들을 확인
+- LLM이 "네! 기본 콜라 대신 아이스티(+300원), 사이다(동일가격), 아메리카노(+500원) 등으로 변경 가능합니다" 응답
+
+---
+
+## 7. processOrder 함수
 
 ### 목적
 장바구니의 모든 항목을 최종 주문으로 처리하고 주문 번호 생성

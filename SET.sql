@@ -20,7 +20,7 @@ CREATE TABLE Products (
 
 CREATE TABLE Set_Items (
     -- set_item_id를 'SI_001'과 같은 텍스트 ID로 저장합니다.
-    set_item_id TEXT PRIMARY KEY,
+    set_item_id INTEGER,
     set_product_id TEXT NOT NULL, -- Products 테이블의 텍스트 ID를 참조
     component_product_id TEXT NOT NULL, -- Products 테이블의 텍스트 ID를 참조
     is_default BOOLEAN NOT NULL DEFAULT TRUE,
@@ -29,6 +29,20 @@ CREATE TABLE Set_Items (
     FOREIGN KEY(set_product_id) REFERENCES Products(product_id),
     FOREIGN KEY(component_product_id) REFERENCES Products(product_id)
 );
+
+CREATE TABLE Order_Items (
+      order_item_id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      order_type TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      base_price INTEGER NOT NULL,
+      modifications TEXT,
+      line_total INTEGER NOT NULL,
+      special_requests TEXT,
+      FOREIGN KEY(order_id) REFERENCES Orders(order_id)
+  );
 
 -- 모든 데이터를 사용자 정의 텍스트 ID 형식으로 변환한 INSERT 스크립트
 
