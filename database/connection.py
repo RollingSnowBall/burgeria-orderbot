@@ -7,18 +7,19 @@ from typing import Generator
 
 
 class DatabaseConnection:
-    """Database connection manager"""
+    # 데이터베이스 연결을 관리하는 클래스
 
     def __init__(self, db_path: str = "C:\\data\\BurgeriaDB.db"):
+        # 데이터베이스 파일 경로 설정 및 초기화
         self.db_path = db_path
         self.init_database()
 
     def init_database(self):
-        """Initialize database connection and create tables if needed"""
+        # 데이터베이스 연결 초기화 및 필요한 테이블 생성
         with self.get_connection() as conn:
             cursor = conn.cursor()
 
-            # Create cart table for session management
+            # 세션 관리를 위한 장바구니 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS Cart (
                 cart_item_id TEXT PRIMARY KEY,
@@ -36,7 +37,7 @@ class DatabaseConnection:
             )
             ''')
 
-            # Create orders table
+            # 주문 정보를 저장하는 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS Orders (
                 order_id TEXT PRIMARY KEY,
@@ -51,7 +52,7 @@ class DatabaseConnection:
             )
             ''')
 
-            # Create order items table
+            # 주문 아이템 상세 정보를 저장하는 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS Order_Items (
                 order_item_id TEXT PRIMARY KEY,
@@ -73,7 +74,7 @@ class DatabaseConnection:
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        """Get database connection with context manager"""
+        # 컨텍스트 매니저를 사용하여 데이터베이스 연결 자동 관리
         conn = sqlite3.connect(self.db_path)
         try:
             yield conn

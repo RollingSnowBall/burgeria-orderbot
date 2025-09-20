@@ -12,21 +12,22 @@ from .product_service import ProductService
 
 
 class CartService:
-    """Service for cart-related operations"""
+    # 장바구니 관련 비즈니스 로직을 처리하는 서비스 클래스
 
     def __init__(self, cart_repository: CartRepository, product_service: ProductService):
+        # CartRepository와 ProductService 인스턴스 주입
         self.cart_repo = cart_repository
         self.product_service = product_service
 
     def add_to_cart(self, session_id: str, product_id: str, quantity: int = 1,
                    order_type: str = "single", modifications: List[Dict] = None,
                    special_requests: str = "") -> Dict[str, Any]:
-        """Add item to cart with modifications"""
+        # 상품을 장바구니에 추가 (단품/세트, 옵션 변경 및 토핑 추가 지원)
         if modifications is None:
             modifications = []
 
         try:
-            # Get product details
+            # 제품 상세 정보 조회
             product = self.product_service.get_product_by_id(product_id)
             if not product:
                 return {
@@ -34,32 +35,33 @@ class CartService:
                     "error": "Product not found"
                 }
 
-            # Check stock
+            # 재고 수량 확인
             if product["stock_quantity"] < quantity:
                 return {
                     "success": False,
                     "error": f"Insufficient stock. Available: {product['stock_quantity']}"
                 }
 
+            # 기본 가격 및 변경 비용 초기화
             base_price = product["price"]
             modification_cost = 0
             modification_details = []
 
-            # Special handling for set orders
+            # 세트 주문의 경우 특별 처리
             set_component_map = {}
             if order_type == "set" and product["product_type"] == "set":
-                # Get set components for validation
+                # 세트 구성품들 가져오기 (유효성 검증용)
                 set_components = self.product_service.get_set_components(product_id)
                 set_component_map = {comp["product_type"]: comp for comp in set_components}
 
-            # Process modifications
+            # 옵션 변경사항 처리 (토핑 추가, 구성품 변경, 사이즈 업그레이드)
             for mod in modifications:
                 mod_type = mod.get("type")
                 target_id = mod.get("target_product_id")
                 new_id = mod.get("new_product_id")
 
                 if mod_type == "add_topping":
-                    # Add topping cost
+                    # 토핑 추가 비용 계산
                     topping = self.product_service.get_product_by_id(new_id)
                     if topping:
                         modification_cost += topping["price"]
@@ -72,16 +74,16 @@ class CartService:
                         ))
 
                 elif mod_type == "change_component" and order_type == "set":
-                    # Enhanced set component change logic
+                    # 세트 구성품 변경 로직 (향상된 버전)
                     old_component = self.product_service.get_product_by_id(target_id)
                     new_component = self.product_service.get_product_by_id(new_id)
 
                     if old_component and new_component:
-                        # Validate that we're changing the right type
+                        # 올바른 타입의 구성품을 변경하는지 검증
                         component_type = new_component["product_type"]
                         if component_type in set_component_map:
                             default_component = set_component_map[component_type]
-                            # Calculate price difference from default component
+                            # 기본 구성품과의 가격 차이 계산
                             price_diff = new_component["price"] - default_component["price"]
                             modification_cost += price_diff
                             modification_details.append(Modification(
@@ -92,7 +94,7 @@ class CartService:
                                 price_change=price_diff
                             ))
                         else:
-                            # Fallback to old logic
+                            # 폴백 로직 (기존 방식)
                             price_diff = new_component["price"] - old_component["price"]
                             modification_cost += price_diff
                             modification_details.append(Modification(
@@ -104,7 +106,7 @@ class CartService:
                             ))
 
                 elif mod_type == "size_upgrade":
-                    # Size upgrade cost (standard 200 won)
+                    # 사이즈 업그레이드 비용 (표준 200원)
                     modification_cost += 200
                     modification_details.append(Modification(
                         type=mod_type,
@@ -112,7 +114,7 @@ class CartService:
                         price_change=200
                     ))
 
-            # Handle set orders - save components individually
+            # 세트 주문 처리 - 각 구성품을 개별적으로 저장
             if order_type == "set" and product["product_type"] == "set":
                 if not set_component_map:
                     return {
@@ -120,24 +122,25 @@ class CartService:
                         "error": f"세트 구성품을 찾을 수 없습니다: {product_id}"
                     }
 
+                # 세트 그룹 ID 생성 (같은 세트의 구성품들을 묶기 위해)
                 set_group_id = str(uuid.uuid4())
                 component_modifications = {}
 
-                # Map modifications to components
+                # 변경사항을 구성품별로 매핑
                 for mod in modifications:
                     if mod.get("type") == "change_component":
                         new_component = self.product_service.get_product_by_id(mod.get("new_product_id"))
                         if new_component:
                             component_modifications[new_component["product_type"]] = mod
 
-                # Save each component individually
+                # 각 구성품을 개별적으로 장바구니에 저장
                 for comp_type, component in set_component_map.items():
                     comp_cart_item_id = str(uuid.uuid4())
                     comp_base_price = component["price"]
                     comp_modification_details = []
                     comp_modification_cost = 0
 
-                    # Check if this component was modified
+                    # 해당 구성품이 변경되었는지 확인
                     if comp_type in component_modifications:
                         mod = component_modifications[comp_type]
                         new_component = self.product_service.get_product_by_id(mod.get("new_product_id"))
@@ -148,7 +151,7 @@ class CartService:
                                 description=f"{comp_type.title()}: {component['product_name']} → {new_component['product_name']}",
                                 price_change=comp_modification_cost
                             ))
-                            # Use new component for display
+                            # 디스플레이용 새로운 구성품 사용
                             display_name = new_component["product_name"]
                             actual_product_id = new_component["product_id"]
                             actual_price = new_component["price"]
@@ -157,6 +160,7 @@ class CartService:
                             actual_product_id = component["product_id"]
                             actual_price = component["price"]
                     else:
+                        # 변경되지 않은 경우 기본 구성품 사용
                         display_name = component["product_name"]
                         actual_product_id = component["product_id"]
                         actual_price = component["price"]
@@ -208,11 +212,11 @@ class CartService:
                 }
 
             else:
-                # Regular single item order
+                # 일반 단품 주문 처리
                 subtotal = base_price + modification_cost
                 line_total = subtotal * quantity
 
-                # Generate cart item ID
+                # 장바구니 아이템 ID 생성
                 cart_item_id = str(uuid.uuid4())
 
                 cart_item = CartItem(
@@ -260,10 +264,12 @@ class CartService:
             }
 
     def get_cart_details(self, session_id: str) -> Dict[str, Any]:
-        """Get current cart contents for a session"""
+        # 세션의 현재 장바구니 내용과 총액 정보 조회
         try:
+            # 데이터베이스에서 장바구니 아이템들 가져오기
             cart_items = self.cart_repo.get_cart_items(session_id)
 
+            # 총 수량과 총액 계산
             total_quantity = 0
             subtotal = 0
 
@@ -305,15 +311,17 @@ class CartService:
 
     def clear_cart(self, session_id: str, cart_item_id: Optional[str] = None,
                   clear_all: bool = False) -> Dict[str, Any]:
-        """Clear cart completely or remove specific item"""
+        # 장바구니 전체 비우기 또는 특정 아이템만 제거
         try:
             if clear_all:
+                # 장바구니 전체 비우기
                 result = self.cart_repo.clear_cart(session_id)
                 if result["success"]:
                     result["message"] = "장바구니가 비워졌습니다."
                 return result
 
             elif cart_item_id:
+                # 특정 아이템만 제거
                 result = self.cart_repo.clear_cart(session_id, cart_item_id)
                 if result["success"]:
                     if result["removed_items"] > 0:
@@ -340,9 +348,10 @@ class CartService:
     def update_cart_item(self, session_id: str, cart_item_id: str,
                         new_quantity: Optional[int] = None,
                         action: str = "update_quantity") -> Dict[str, Any]:
-        """Update cart item quantity"""
+        # 장바구니 아이템의 수량 수정
         try:
             if action == "update_quantity" and new_quantity:
+                # 수량 업데이트 시도
                 if self.cart_repo.update_cart_item(session_id, cart_item_id, new_quantity):
                     return {
                         "success": True,

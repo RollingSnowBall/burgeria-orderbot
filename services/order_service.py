@@ -11,17 +11,18 @@ from .cart_service import CartService
 
 
 class OrderService:
-    """Service for order-related operations"""
+    # 주문 관련 비즈니스 로직을 처리하는 서비스 클래스
 
     def __init__(self, order_repository: OrderRepository, cart_service: CartService):
+        # OrderRepository와 CartService 인스턴스 주입
         self.order_repo = order_repository
         self.cart_service = cart_service
 
     def process_order(self, session_id: str, customer_info: Optional[Dict[str, str]] = None,
                      order_type: str = "takeout") -> Dict[str, Any]:
-        """Process final order from cart"""
+        # 장바구니 내용을 바탕으로 최종 주문 처리
         try:
-            # Get cart details
+            # 장바구니 내용 가져오기
             cart_details = self.cart_service.get_cart_details(session_id)
             if not cart_details["success"] or not cart_details["cart_items"]:
                 return {
@@ -32,17 +33,17 @@ class OrderService:
             cart_items = cart_details["cart_items"]
             total_amount = cart_details["summary"]["total_amount"]
 
-            # Generate order ID
+            # 주문 ID 생성 (날짜시간 기반)
             order_id = f"ORD_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-            # Calculate estimated time (base 10 minutes + 3 minutes per item)
+            # 예상 준비 시간 계산 (기본 10분 + 아이템당 3분)
             estimated_time = 10 + (len(cart_items) * 3)
 
-            # Extract customer info
+            # 고객 정보 추출
             customer_name = customer_info.get("name", "") if customer_info else ""
             customer_phone = customer_info.get("phone", "") if customer_info else ""
 
-            # Create order
+            # 데이터베이스에 주문 생성
             if not self.order_repo.create_order(
                 order_id, session_id, total_amount, order_type,
                 customer_name, customer_phone, estimated_time
@@ -52,11 +53,11 @@ class OrderService:
                     "error": "주문 생성 중 오류가 발생했습니다."
                 }
 
-            # Insert order items
+            # 주문 아이템들을 데이터베이스에 삽입
             for cart_item in cart_items:
                 order_item_id = str(uuid.uuid4())
 
-                # Convert modifications back to Modification objects if they're dicts
+                # 변경사항들을 Modification 객체로 변환 (딕셔너리 형태인 경우)
                 modifications = []
                 for mod in cart_item["modifications"]:
                     if isinstance(mod, dict):
@@ -91,10 +92,10 @@ class OrderService:
                         "error": "주문 항목 저장 중 오류가 발생했습니다."
                     }
 
-            # Clear the cart after successful order
+            # 성공적인 주문 후 장바구니 비우기
             clear_result = self.cart_service.clear_cart(session_id, clear_all=True)
             if not clear_result["success"]:
-                # Log warning but don't fail the order
+                # 경고 로그만 남기고 주문은 실패시키지 않음
                 pass
 
             return {
@@ -116,8 +117,9 @@ class OrderService:
             }
 
     def get_order_details(self, order_id: str) -> Dict[str, Any]:
-        """Get detailed information about a specific order"""
+        # 특정 주문의 상세 정보 조회 (고객정보, 주문상품, 상태 등)
         try:
+            # 데이터베이스에서 주문 상세 정보 가져오기
             order_details = self.order_repo.get_order_details(order_id)
             if not order_details:
                 return {

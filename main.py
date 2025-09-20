@@ -8,7 +8,7 @@ from ui.ai_ui import AIOrderUI
 
 
 def main():
-    """Main entry point"""
+    # 프로그램의 메인 진입점 - 사용자에게 UI 선택 메뉴 제공
     print("=== 버거리아 주문 시스템 ===")
     print("1. 간단한 텍스트 주문 시스템")
     print("2. AI 대화형 주문 시스템")
@@ -19,6 +19,7 @@ def main():
         choice = input("\\n선택하세요 (1-4): ").strip()
 
         if choice == "1":
+            # 간단한 텍스트 기반 주문 시스템 실행
             print("\\n간단한 텍스트 주문 시스템을 시작합니다...")
             bot = BurgeriaOrderBot()
             ui = SimpleOrderUI(bot)
@@ -26,6 +27,7 @@ def main():
             break
 
         elif choice == "2":
+            # AI 대화형 주문 시스템 실행
             print("\\nAI 대화형 주문 시스템을 시작합니다...")
             bot = BurgeriaOrderBot()
             ui = AIOrderUI(bot)
@@ -33,11 +35,13 @@ def main():
             break
 
         elif choice == "3":
+            # 테스트 모드 실행 (개발/디버깅용)
             print("\\n테스트 모드를 시작합니다...")
             run_test_mode()
             break
 
         elif choice == "4":
+            # 프로그램 종료
             print("프로그램을 종료합니다.")
             sys.exit(0)
 
@@ -46,16 +50,16 @@ def main():
 
 
 def run_test_mode():
-    """Run test mode with examples from original file"""
+    # 테스트 모드 실행 - 시스템의 모든 기능을 테스트
     bot = BurgeriaOrderBot()
     session_id = "test_session_001"
 
     print("\\n=== Burgeria Order Bot Test (Updated) ===")
 
-    # Clear any existing cart
+    # 기존 장바구니 비우기
     bot.clear_cart(session_id, clear_all=True)
 
-    # Check if we have set items data
+    # 데이터베이스 상태 확인 (세트 구성품 데이터 존재 여부)
     print("\\n0. 데이터베이스 상태 확인:")
     test_set = bot.get_set_components("G00001")
     if not test_set:
@@ -66,14 +70,14 @@ def run_test_mode():
     else:
         print(f"✅ 세트 구성품 {len(test_set)}개 발견")
 
-    # Test 1: Find products
+    # 테스트 1: 제품 검색 기능 테스트
     print("\\n1. 제품 검색 테스트:")
     result = bot.find_product("한우불고기", category="burger")
     print(f"검색 결과: {result['total_found']}개 발견")
     for match in result["matches"]:
         print(f"- {match['product_name']} ({match['product_id']}) - {match['price']}원")
 
-    # Test 2: Set change options test
+    # 테스트 2: 세트 변경 옵션 기능 테스트
     print("\\n2. 세트 변경 옵션 테스트:")
     set_options = bot.get_set_change_options("G00001")  # 한우불고기버거 세트
     if set_options["success"]:
@@ -90,7 +94,7 @@ def run_test_mode():
         for side in set_options["change_options"]["sides"][:3]:
             print(f"- {side['product_name']} ({side['price']}원)")
 
-    # Test 3: Add set to cart with modifications
+    # 테스트 3: 세트 주문 및 구성품 변경 기능 테스트
     print("\\n3. 세트 주문 테스트 (음료 변경):")
     set_result = bot.add_to_cart(
         session_id=session_id,
@@ -113,7 +117,7 @@ def run_test_mode():
     else:
         print(f"세트 추가 실패: {set_result.get('error', '알 수 없는 오류')}")
 
-    # Test 4: Add single item with topping
+    # 테스트 4: 단품 주문 및 토핑 추가 기능 테스트
     print("\\n4. 단품 주문 테스트 (토핑 추가):")
     single_result = bot.add_to_cart(
         session_id=session_id,
@@ -132,7 +136,7 @@ def run_test_mode():
     else:
         print(f"단품 추가 실패: {single_result.get('error', '알 수 없는 오류')}")
 
-    # Test 5: View cart
+    # 테스트 5: 장바구니 조회 기능 테스트
     print("\\n5. 장바구니 조회 테스트:")
     cart = bot.get_cart_details(session_id)
     print(f"장바구니 상태: {cart['message']}")
@@ -144,7 +148,7 @@ def run_test_mode():
             for mod in item['modifications']:
                 print(f"  └ {mod['description']}: {mod['price_change']:+d}원")
 
-    # Test 6: Process order
+    # 테스트 6: 주문 처리 기능 테스트
     print("\\n6. 주문 처리 테스트:")
     order_result = bot.process_order(
         session_id=session_id,
@@ -158,12 +162,12 @@ def run_test_mode():
     else:
         print(f"주문 실패: {order_result['error']}")
 
-    # Test 7: Verify cart is empty after order
+    # 테스트 7: 주문 후 장바구니 비워짐 확인 테스트
     print("\\n7. 주문 후 장바구니 확인:")
     empty_cart = bot.get_cart_details(session_id)
     print(f"주문 후 장바구니: {empty_cart['message']}")
 
-    # Test 8: Get order details
+    # 테스트 8: 주문 상세 정보 조회 기능 테스트
     if order_id:
         print(f"\\n8. 주문 상세 조회 테스트 (주문번호: {order_id}):")
         order_details = bot.get_order_details(order_id)
