@@ -44,6 +44,49 @@ CREATE TABLE Order_Items (
       FOREIGN KEY(order_id) REFERENCES Orders(order_id)
   );
 
+  CREATE TABLE IF NOT EXISTS Order_Items (
+            order_item_id TEXT PRIMARY KEY,
+            order_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            order_type TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            base_price INTEGER NOT NULL,
+            modifications TEXT,
+            line_total INTEGER NOT NULL,
+            special_requests TEXT,
+            set_group_id TEXT,
+            FOREIGN KEY(order_id) REFERENCES Order order_id)
+        );
+
+
+    CREATE TABLE IF NOT EXISTS Orders (
+            order_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            total_amount INTEGER NOT NULL,
+            order_type TEXT NOT NULL,
+            customer_name TEXT,
+            customer_phone TEXT,
+            status TEXT DEFAULT 'pending',
+            estimated_time INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+    CREATE TABLE IF NOT EXISTS Cart (
+            cart_item_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            product_name TEXT NOT NULL,
+            order_type TEXT NOT NULL,
+            quantity INTEGER NOT NULL DEFAULT 1,
+            base_price INTEGER NOT NULL,
+            modifications TEXT,
+            line_total INTEGER NOT NULL,
+            special_requests TEXT,
+            set_group_id TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    
 -- 모든 데이터를 사용자 정의 텍스트 ID 형식으로 변환한 INSERT 스크립트
 
 -- 1. 메뉴 카테고리 데이터 INSERT
