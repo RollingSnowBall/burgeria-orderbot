@@ -6,11 +6,22 @@ Phase 1 MVP를 위한 기본 검색 및 장바구니 추가 기능
 
 import sqlite3
 import uuid
+import platform
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 
 
-def findProduct(query: str, category: Optional[str] = None, db_path: str = "C:\\data\\BurgeriaDB.db") -> Dict[str, Any]:
+def get_default_db_path() -> str:
+    """운영체제에 따라 기본 DB 경로 반환"""
+    if platform.system() == "Windows":
+        return "C:\\data\\BurgeriaDB.db"
+    else:  # macOS, Linux
+        # Mac의 경우 현재 프로젝트 디렉토리의 data 폴더 사용
+        return os.path.expanduser("/Users/juno/Desktop/claude/Burgeria/BurgeriaDB.db")
+
+
+def findProduct(query: str, category: Optional[str] = None, db_path: str = None) -> Dict[str, Any]:
     """
     사용자 입력과 정확히 일치하거나 포함하는 상품을 검색 (SQL LIKE 사용)
 
@@ -34,6 +45,9 @@ def findProduct(query: str, category: Optional[str] = None, db_path: str = "C:\\
         >>> findProduct("없는메뉴")
         {"success": True, "status": "NOT_FOUND", "product": None, "message": "..."}
     """
+    if db_path is None:
+        db_path = get_default_db_path()
+
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -94,7 +108,7 @@ def addToCart(
     product_id: str,
     quantity: int = 1,
     special_requests: str = "",
-    db_path: str = "C:\\data\\BurgeriaDB.db"
+    db_path: str = None
 ) -> Dict[str, Any]:
     """
     단품 메뉴를 장바구니에 추가 (product_type != 'set')
@@ -120,6 +134,9 @@ def addToCart(
         >>> addToCart("session_123", "A00001", quantity=1)
         {"success": True, "cart_item_id": "...", "product_name": "한우불고기버거", ...}
     """
+    if db_path is None:
+        db_path = get_default_db_path()
+
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
